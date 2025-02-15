@@ -28,13 +28,13 @@ class StoryOutput(BaseModel):
     image_prompt: str
     options: list[str]
 
-class StoryRequest(BaseModel):
+class StoryRequest(BaseModel): # This is the first panel
     image_path: Optional[str] = None
     story: Optional[str] = None
     choice: Optional[str] = None
     panel: int
 
-class StoryResponse(BaseModel):
+class StoryResponse(BaseModel): # This is the output of gemini
     story: str
     image_prompt: str
     options: list[str]
@@ -119,8 +119,24 @@ def generate_next_panel(request: StoryRequest):
         options=story_output.options,
         image_path=image_path
     )
+    
+    
+# THIS IS JUST FOR TESTING
+@app.get("/generate_story")
+def generate_next_panel():
+    story_output = generate_story_from_image("kids_drawing.jpg")
+    image_path = generate_image(story_output.image_prompt)
+
+    return StoryResponse(
+        story=story_output.story,
+        image_prompt=story_output.image_prompt,
+        options=story_output.options,
+        image_path=image_path
+    )
 
 
 @app.get("/images/{image_name}")
 def get_image(image_name: str):
     return FileResponse(f"images/{image_name}")
+
+
