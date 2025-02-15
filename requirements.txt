@@ -1,0 +1,7 @@
+fastapi
+uvicorn
+pillow
+pydantic
+lumaai
+google-generativeai
+pyyaml

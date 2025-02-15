@@ -1,3 +1,5 @@
+#moved into backend.py to wrap with fastapi
+
 from lumaai import LumaAI
 import os
 import time
