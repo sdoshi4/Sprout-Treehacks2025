@@ -67,11 +67,11 @@ def generate_story_from_image(image_path):
         contents=[image, "Generate the first chapter of a children's book (~100 words) with a choice. Return 'story', 'image_prompt', 'options'."],
         config={'response_mime_type': 'application/json', 
                 'response_schema': StoryOutput,
-                'safety_settings': [ 
-                    {"category": "HARM_CATEGORY_HARASSMENT", "threshold": "block-medium"},
-                    {"category": "HARM_CATEGORY_HATE_SPEECH", "threshold": "block-medium"},
-                    {"category": "HARM_CATEGORY_DANGEROUS_CONTENT", "threshold": "block-medium"},
-                    {"category": "HARM_CATEGORY_SEXUALLY_EXPLICIT", "threshold": "block-high"},
+                'safety_settings': [
+                    {"category": "HARM_CATEGORY_HARASSMENT", "threshold": "BLOCK_MEDIUM_AND_ABOVE"},
+                    {"category": "HARM_CATEGORY_HATE_SPEECH", "threshold": "BLOCK_MEDIUM_AND_ABOVE"},
+                    {"category": "HARM_CATEGORY_DANGEROUS_CONTENT", "threshold": "BLOCK_MEDIUM_AND_ABOVE"},
+                    {"category": "HARM_CATEGORY_SEXUALLY_EXPLICIT", "threshold": "BLOCK_ONLY_HIGH"},
                 ]
             },
     )
@@ -84,11 +84,11 @@ def generate_next_story(story, choice):
         contents=[f"Chapter: {story}", f"Choice: {choice}", "Generate the next chapter."],
         config={'response_mime_type': 'application/json', 
                 'response_schema': StoryOutput,
-                'safety_settings': [ 
-                    {"category": "HARM_CATEGORY_HARASSMENT", "threshold": "block-medium"},
-                    {"category": "HARM_CATEGORY_HATE_SPEECH", "threshold": "block-medium"},
-                    {"category": "HARM_CATEGORY_DANGEROUS_CONTENT", "threshold": "block-medium"},
-                    {"category": "HARM_CATEGORY_SEXUALLY_EXPLICIT", "threshold": "block-high"},
+                'safety_settings': [
+                    {"category": "HARM_CATEGORY_HARASSMENT", "threshold": "BLOCK_MEDIUM_AND_ABOVE"},
+                    {"category": "HARM_CATEGORY_HATE_SPEECH", "threshold": "BLOCK_MEDIUM_AND_ABOVE"},
+                    {"category": "HARM_CATEGORY_DANGEROUS_CONTENT", "threshold": "BLOCK_MEDIUM_AND_ABOVE"},
+                    {"category": "HARM_CATEGORY_SEXUALLY_EXPLICIT", "threshold": "BLOCK_ONLY_HIGH"},
                 ]
             },
     )
