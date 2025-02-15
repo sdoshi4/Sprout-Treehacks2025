@@ -65,7 +65,15 @@ def generate_story_from_image(image_path):
     response = gemini_client.models.generate_content(
         model="gemini-2.0-flash",
         contents=[image, "Generate the first chapter of a children's book (~100 words) with a choice. Return 'story', 'image_prompt', 'options'."],
-        config={'response_mime_type': 'application/json', 'response_schema': StoryOutput},
+        config={'response_mime_type': 'application/json', 
+                'response_schema': StoryOutput,
+                'safety_settings': [ 
+                    {"category": "HARM_CATEGORY_HARASSMENT", "threshold": "block-medium"},
+                    {"category": "HARM_CATEGORY_HATE_SPEECH", "threshold": "block-medium"},
+                    {"category": "HARM_CATEGORY_DANGEROUS_CONTENT", "threshold": "block-medium"},
+                    {"category": "HARM_CATEGORY_SEXUALLY_EXPLICIT", "threshold": "block-high"},
+                ]
+            },
     )
     return response.parsed
 
@@ -74,7 +82,15 @@ def generate_next_story(story, choice):
     response = gemini_client.models.generate_content(
         model="gemini-2.0-flash",
         contents=[f"Chapter: {story}", f"Choice: {choice}", "Generate the next chapter."],
-        config={'response_mime_type': 'application/json', 'response_schema': StoryOutput},
+        config={'response_mime_type': 'application/json', 
+                'response_schema': StoryOutput,
+                'safety_settings': [ 
+                    {"category": "HARM_CATEGORY_HARASSMENT", "threshold": "block-medium"},
+                    {"category": "HARM_CATEGORY_HATE_SPEECH", "threshold": "block-medium"},
+                    {"category": "HARM_CATEGORY_DANGEROUS_CONTENT", "threshold": "block-medium"},
+                    {"category": "HARM_CATEGORY_SEXUALLY_EXPLICIT", "threshold": "block-high"},
+                ]
+            },
     )
     return response.parsed
 
