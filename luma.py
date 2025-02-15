@@ -2,9 +2,14 @@ from lumaai import LumaAI
 import os
 import time 
 import requests
+import yaml
+
+# Load API key from keys.yaml
+with open('keys.yaml', 'r') as file:
+    keys = yaml.safe_load(file)
 
 client = LumaAI(
-    auth_token=os.environ.get("LUMAAI_API_KEY"),
+    auth_token=keys['lumaai_api_key'],
 )
 
 generation = client.generations.image.create(
