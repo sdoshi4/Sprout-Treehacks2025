@@ -34,7 +34,8 @@ def generate_image(prompt):
 
     image_url = generation.assets.image
     response = requests.get(image_url, stream=True)
-    filename = f'{generation.id}.jpg'
+    filename = f'images/{generation.id}.jpg'
+    os.makedirs('images', exist_ok=True) #make dir for images if it doesnt exist already
     with open(filename, 'wb') as file:
         file.write(response.content)
     return filename
