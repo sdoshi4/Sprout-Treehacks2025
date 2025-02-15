@@ -1,0 +1,15 @@
+name: lumaai_env
+channels:
+  - defaults
+dependencies:
+  - python=3.11  # Adjust the version if needed
+  - pip
+  - pip:
+      - requests
+      - lumaai
+      - time 
+  
+
+  #conda env create -f requirements.yml
+
+
