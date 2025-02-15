@@ -140,3 +140,6 @@ def get_image(image_name: str):
     return FileResponse(f"images/{image_name}")
 
 
+@app.get("/")
+def read_root():
+    return {"message": "Storyboard Backend is Running!"}
