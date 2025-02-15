@@ -12,6 +12,9 @@ from concurrent.futures import ThreadPoolExecutor
 from fastapi import FastAPI
 from fastapi.responses import FileResponse
 from typing import Optional
+from fastapi import FastAPI, Body
+import requests
+from io import BytesIO
 
 
 app = FastAPI()
@@ -60,11 +63,11 @@ def generate_image(prompt):
     return filename
 
 
-def generate_story_from_image(image_path):
-    image = Image.open(image_path)
+def generate_story_from_image(image: Image.Image):
     response = gemini_client.models.generate_content(
         model="gemini-2.0-flash",
-        contents=[image, "Generate the first chapter of a children's book (~100 words) with a choice. Return 'story', 'image_prompt', 'options'."],
+        contents=[image, '''This is an image of a child's drawing. Generate the first chapter of a children's book (around 300 words) from this image, ending the chapter with one of two plot choices. 
+                            Also describe the image passed in. Return 'story', 'image_prompt', 'options'.'''],
         config={'response_mime_type': 'application/json', 
                 'response_schema': StoryOutput,
                 'safety_settings': [
@@ -124,7 +127,8 @@ def generate_next_panel(request: StoryRequest):
 # THIS IS JUST FOR TESTING
 @app.get("/generate_story")
 def generate_next_panel():
-    story_output = generate_story_from_image("kids_drawing.jpg")
+    image = Image.open("kids_drawing.jpg")
+    story_output = generate_story_from_image(image)
     image_path = generate_image(story_output.image_prompt)
 
     return StoryResponse(
@@ -143,3 +147,30 @@ def get_image(image_name: str):
 @app.get("/")
 def read_root():
     return {"message": "Storyboard Backend is Running!"}
+
+
+# @app.get("/get_first_panel")
+# def get_first_panel(request: StoryRequest):
+#     story_output = generate_story_from_image(request.image_path)
+#     image_path = generate_image(story_output.image_prompt)
+
+#     return StoryResponse(
+#         story=story_output.story,
+#         image_prompt=story_output.image_prompt,
+#         options=story_output.options,
+#         image_path=image_path
+#     )
+
+
+@app.post("/upload_image/")
+async def upload_image(image_bytes: bytes = Body(..., media_type="application/octet-stream")):
+    image = Image.open(BytesIO(image_bytes))
+    story_output = generate_story_from_image(image)
+    image_path = generate_image(story_output.image_prompt)
+    
+    return StoryResponse(
+        story=story_output.story,
+        image_prompt=story_output.image_prompt,
+        options=story_output.options,
+        image_path=image_path
+    )
