@@ -13,15 +13,22 @@ from fastapi import FastAPI
 from fastapi.responses import FileResponse
 from typing import Optional
 
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
 
 app = FastAPI()
 
 
-with open('keys.yaml', 'r') as file:
-    keys = yaml.safe_load(file)
+# with open('keys.yaml', 'r') as file:
+#     keys = yaml.safe_load(file)
+luma_key = os.getenv('LUMAAI_API_KEY')
+gemini_key = os.getenv('gemini_api_key')
 
-luma_client = LumaAI(auth_token=keys['lumaai_api_key'])
-gemini_client = genai.Client(api_key=keys['gemini_api_key'])
+
+luma_client = LumaAI(auth_token=luma_key)
+gemini_client = genai.Client(api_key=gemini_key)
 
 class StoryOutput(BaseModel):
     story: str
