@@ -1,6 +1,7 @@
 from lumaai import LumaAI
 import os
 import time
+import random 
 import requests
 import yaml
 from google import genai
@@ -19,8 +20,77 @@ from io import BytesIO
 import json
 from fastapi import FastAPI, UploadFile, File
 from fastapi.responses import JSONResponse
+import math
+
+# from PyDictionary import PyDictionary
+
+import nltk
+nltk.download('wordnet')
+from nltk.corpus import wordnet as wn
+
 
 app = FastAPI()
+
+comprehension_vocab = {
+    "grade_3": [
+        "abbreviation", "adverb", "biography", "character", "chronological", "conjunction",
+        "context", "declarative", "encyclopedia", "fact", "glossary", "index", "inference",
+        "interrogative", "main", "modern", "opinion", "persuasion", "possessive", "revise",
+        "subject", "theme", "attentive", "destination", "emerge", "fragrance", "habitation",
+        "illuminate", "jargon", "knoll", "misgiving", "pertinent", "serenity", "stamina", "vigilant", "waft"
+    ],
+    "grade_4": [
+        "almanac", "analyze", "audience", "compare", "contrast", "evaluate", "genre",
+        "legend", "metaphor", "outline", "paraphrase", "publish", "research", "sentence",
+        "simile", "supporting", "text", "transition", "adversary", "banish", "bluff", "cunning",
+        "defiance", "dispel", "egregious", "falter", "grueling", "headway", "imperious",
+        "malleable", "momentum", "obscure", "precipice", "replenish", "scarcity", "somber", "swagger", "tactic"
+    ],
+    "grade_5": [
+        "caption", "conflict", "figurative", "idiom", "interjection", "minor", "onomatopoeia",
+        "outline", "poetic", "reference", "resolution", "stereotypical", "superlative",
+        "supporting", "word", "barricade", "circumference", "concoction", "contortion",
+        "disdain", "exasperation", "foresight", "gusto", "ignite", "jut", "meander",
+        "monotonous", "muster", "outlandish", "pristine", "quell", "recuperate",
+        "restitution", "subside", "translucent", "unsightly", "weather"
+    ],
+    "grade_6": [
+        "affix", "analogy", "allusion", "appositive", "clause", "dialect", "literal",
+        "mythology", "narrative", "phrases", "plagiarism", "predicate", "propaganda",
+        "relevant", "sentence", "synthesize", "aplomb", "apprehensive", "brackish",
+        "debris", "deft", "diminish", "dismal", "ember", "engross", "exhilarate",
+        "furtive", "hasten", "impending", "jabber", "jostle", "kindle", "luminous",
+        "materialize", "meticulous", "multitude", "narrate", "ominous", "persistent",
+        "potential", "repugnant", "sabotage", "scurry", "sociable", "specimen",
+        "swarm", "terse", "uncanny", "versatile", "vulnerable", "waver", "zeal"
+    ],
+    "grade_7": [
+        "assumption", "clause", "convention", "description", "exposition", "flashback",
+        "fluency", "foreshadowing", "imagery", "interpretation", "irony", "nominative",
+        "prose", "types", "viewpoint", "brandish", "commotion", "conspicuous", "counter",
+        "eavesdrop", "engross", "exasperation", "falter", "fragrance", "grueling", "headway",
+        "ignite", "imperious", "jargon", "jut", "luminous", "meander", "momentum", "muster",
+        "obscure", "pertinent", "potential", "pristine", "recuperate", "repugnant", "scarcity",
+        "serenity", "swagger", "tactic", "translucent", "unsightly", "vigilant", "waft"
+    ],
+    "grade_8": [
+        "agreement", "argument", "bias", "coherence", "debate", "derivation", "dramatization",
+        "elaboration", "gerund", "inference", "infinitive", "parallel", "persuasive",
+        "sensory", "thesis", "adversary", "apprehensive", "barricade", "banish", "bluff",
+        "circumference", "concoction", "contortion", "cunning", "defiance", "destination",
+        "disdain", "dispel", "egregious", "emerge", "exasperation", "falter", "foresight",
+        "gusto", "habitation", "headway", "illuminate", "imperious", "jargon", "knoll",
+        "malleable", "meander", "misgiving", "momentum", "muster", "obscure", "outlandish",
+        "pertinent", "precipice", "pristine", "recluse", "replenish", "restitution",
+        "scarcity", "serenity", "somber", "stamina", "swagger", "tactic", "translucent",
+        "unsightly", "vigilant", "waft", "zeal"
+    ]
+}
+
+chosen_vocab = []
+chosen_grade_level_key = ""
+used_word2 = False
+
 
 
 with open('keys.yaml', 'r') as file:
@@ -54,6 +124,14 @@ class StoryResponse(BaseModel): # This is the output of gemini
     image_prompt: str
     options: list[str]
     image_path: str
+
+def get_definition(word):
+    synsets = wn.synsets(word)
+    if not synsets:
+        return None
+    # Get the first definition as a simple approach
+    return synsets[0].definition()
+
 
 def upload_to_imgur(image_path: str) -> str:
     """
@@ -120,7 +198,17 @@ def generate_image(prompt, image_url: Optional[str] = None):
     return imgur_url  # Return Imgur URL instead of local path
 
 # USED FOR THE FIRST ITERATION
-def generate_story_from_image(image: Image.Image):
+def generate_story_from_image(image: Image.Image, grade_level_key: str):
+    chosen_grade_level_key = grade_level_key
+    i, j = 0
+    while (i==j):
+        i, j = math.random(0, len(comprehension_vocab[grade_level_key]))
+    chosen_vocab.append(comprehension_vocab[grade_level_key][i])
+    chosen_vocab.append(comprehension_vocab[grade_level_key][j])
+    
+    
+
+
     response = gemini_client.models.generate_content(
         model="gemini-2.0-flash",
         contents=[image, '''Analyze the provided image of a child's drawing and create the following for the first chapter of a children's storybook:
@@ -137,6 +225,7 @@ def generate_story_from_image(image: Image.Image):
    - Introduce and describe the main characters and setting in detail.
    - Develop a clear plot point or conflict.
    - End the chapter with a situation that leads to two distinct choices.
+   
 
 4. Options:
    - Provide two specific, mutually exclusive choices for how the story could continue.
@@ -151,7 +240,7 @@ Return the results in the following JSON format:
 }
 
 Note: Ensure the title strictly follows the format "Chapter 1: {title name here}".
-'''],
+''' + f"Finally, in the story, ensure that you incorporate the chosen vocabulary word: {chosen_vocab[0]}; this is very important"],
         config={'response_mime_type': 'application/json', 
                 'response_schema': StoryOutput,
                 'safety_settings': [
@@ -166,6 +255,14 @@ Note: Ensure the title strictly follows the format "Chapter 1: {title name here}
 
 # USED FOR ALL AFTER THE FIRST
 def generate_next_story(title, story, choice):
+    
+    if (not used_word2):
+        vocab_prompt_engineering = f"Finally, in the story, ensure that you incorporate the chosen vocabulary word: {chosen_vocab[1]}; this is very important"
+        used_word2 = True
+    else:
+        vocab_prompt_engineering = f"Finally, in the story, if it makes sense, you should incorporate the chosen vocabulary words: {chosen_vocab[0]} and/or {chosen_vocab[1]};"
+        
+    
     response = gemini_client.models.generate_content(
         model="gemini-2.0-flash",
         contents=[f"Chapter title: {title}", f"Chapter: {story}", f"Choice: {choice}", '''
@@ -203,7 +300,7 @@ Return the results in the following JSON format:
 }
 
 Note: Maintain consistency with the characters, settings, and plot developments from the previous chapter. The new chapter should be a direct continuation based on the user's choice. Ensure the title strictly follows the format "Chapter X: {title name here}".
-                  '''],
+                  ''' + vocab_prompt_engineering],
         config={'response_mime_type': 'application/json', 
                 'response_schema': StoryOutput,
                 'safety_settings': [
@@ -233,6 +330,59 @@ Note: Maintain consistency with the characters, settings, and plot developments 
 #         image_path= image_path # this is a url now
 #     )
 
+
+
+def generate_quiz_from_vocab(vocab_words):
+    ''' inputs: list of vocab words
+        outputs: list of quiz questions '''
+    
+    quiz_questions = []
+
+    for word in vocab_words:
+        # 1. Get the correct definition
+        
+        correct_definition = get_definition(word)
+        
+
+        # 2. Get 3 wrong answers from the same grade level (excluding the word itself)
+        grade_words = comprehension_vocab[chosen_grade_level_key]
+        other_words = [w for w in grade_words if w != word]
+
+        wrong_answers = []
+        while len(wrong_answers) < 3:
+            random_word = random.choice(other_words)
+            wrong_def = get_definition(random_word)
+
+            if wrong_def and wrong_def != correct_definition and wrong_def not in wrong_answers:
+                wrong_answers.append(wrong_def)
+
+        # 3. Prepare options
+        options = [correct_definition] + wrong_answers
+        random.shuffle(options)
+
+        # 4. Store the quiz question
+        quiz_questions.append({
+            "word": word,
+            "correct_answer": correct_definition,
+            "options": options
+        })
+
+    return quiz_questions
+
+# testing dictionary code
+# if __name__ == "__main__":
+#     # test generate_quiz_from_vcab:
+#     vocab_words = ["abbreviation", "adverb"]
+#     chosen_grade_level_key = "grade_3"
+#     quiz_questions = generate_quiz_from_vocab(vocab_words)
+#     print(quiz_questions)
+
+
+
+
+###### ----------------- --------------------------- ENDPOINTS ----------------- --------------------------- ######
+
+    
 
 @app.post("/generate_next_panel", response_model=StoryResponse)
 def generate_next_panel(request: StoryRequest):
