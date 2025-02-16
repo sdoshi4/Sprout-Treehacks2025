@@ -174,3 +174,16 @@ async def upload_image(image_bytes: bytes = Body(..., media_type="application/oc
         options=story_output.options,
         image_path=image_path
     )
+    
+@app.post("/upload_image_flutterflow/")
+async def upload_image(image_bytes: bytes = Body(..., media_type="application/octet-stream")):
+    image = Image.open(BytesIO(image_bytes.bytes))
+    story_output = generate_story_from_image(image)
+    image_path = generate_image(story_output.image_prompt)
+    
+    return StoryResponse(
+        story=story_output.story,
+        image_prompt=story_output.image_prompt,
+        options=story_output.options,
+        image_path=image_path
+    )
