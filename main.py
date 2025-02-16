@@ -8,14 +8,14 @@ from PIL import Image
 from google.genai import types
 from pydantic import BaseModel
 from concurrent.futures import ThreadPoolExecutor
+from typing import List, Optional
 
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 from fastapi.responses import FileResponse
 from typing import Optional
 from fastapi import FastAPI, Body, Request
 import requests
 from io import BytesIO
-
 
 app = FastAPI()
 
@@ -25,6 +25,13 @@ with open('keys.yaml', 'r') as file:
 
 luma_client = LumaAI(auth_token=keys['lumaai_api_key'])
 gemini_client = genai.Client(api_key=keys['gemini_api_key'])
+
+class ImageData(BaseModel):
+    name: str
+    bytes: List[int]  # Expecting a list of integers representing image bytes
+
+class RequestModel(BaseModel):
+    data: ImageData
 
 class StoryOutput(BaseModel):
     story: str
@@ -175,18 +182,48 @@ async def upload_image(image_bytes: bytes = Body(..., media_type="application/oc
         image_path=image_path
     )
     
-@app.post("/upload_image_flutterflow/")
-async def upload_image(request: Request):
-    json_data = await request.json()
-    print(json_data)
-    image_bytes = bytes(json_data["data"]["bytes"])
-    image = Image.open(BytesIO(image_bytes))
-    story_output = generate_story_from_image(image)
-    image_path = generate_image(story_output.image_prompt)
+# @app.post("/upload_image_flutterflow/")
+# async def upload_image(request = RequestModel):
+#     print(request)
+#     # print("Received JSON:", json_data)  # Debugging output
+#     image_data = request.data
+#     image_bytes = bytes(image_data["bytes"])
+#     image = Image.open(BytesIO(image_bytes))
+#     story_output = generate_story_from_image(image)
+#     image_path = generate_image(story_output.image_prompt)
     
-    return StoryResponse(
-        story=story_output.story,
-        image_prompt=story_output.image_prompt,
-        options=story_output.options,
-        image_path=image_path
-    )
+#     return StoryResponse(
+#         story=story_output.story,
+#         image_prompt=story_output.image_prompt,
+#         options=story_output.options,
+#         image_path=image_path
+#     )
+
+@app.post("/upload_image_flutterflow/")
+async def upload_image_flutterflow(request: Request):
+    json_data = await request.json()
+    print("Received JSON data:", json_data)
+
+    try:
+        image_bytes = bytes(json_data["data"]["bytes"])
+        image = Image.open(BytesIO(image_bytes))
+        story_output = generate_story_from_image(image)
+        image_path = generate_image(story_output.image_prompt)
+        
+        return StoryResponse(
+            story=story_output.story,
+            image_prompt=story_output.image_prompt,
+            options=story_output.options,
+            image_path=image_path
+        )
+        # image.verify()  # Validate the image without loading fully
+
+        # Save image
+        # os.makedirs("images", exist_ok=True)
+        # image_path = f"images/{json_data['data']['name']}"
+        # image = Image.open(BytesIO(image_bytes))  # Re-open to actually load it
+        # image.save(image_path)
+
+        # return {"message": f"Image saved to {image_path}"}
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"Image processing failed: {e}")

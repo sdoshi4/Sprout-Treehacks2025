@@ -12,6 +12,7 @@ import json
 with open('image.json', 'r') as file:
     image_bytes = json.load(file)
     
+# print(image_bytes)
 
 # print(data["data"]["bytes"])
 # image_bytes = bytes(data["data"]["bytes"])
@@ -20,11 +21,11 @@ response = requests.post(
     # "https://385a-68-65-164-29.ngrok-free.app/upload_image/",
     
     "https://a771-68-65-164-139.ngrok-free.app/upload_image_flutterflow",
-    data=image_bytes,
-    headers={"Content-Type": "application/octet-stream"}
+    json=image_bytes,
+    headers={"Content-Type": "application/json"}
 )
 
 # response = requests.get("https://385a-68-65-164-29.ngrok-free.app/generate_story")
 
 # Print response
-print(response.json())
+print(response.content)
