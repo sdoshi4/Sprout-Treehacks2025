@@ -63,7 +63,12 @@ def generate_image(prompt, image_url: Optional[str] = None):
         # Pass the image URL as conditioning input if supported by Luma API
         generation = luma_client.generations.image.create(
             prompt=prompt,
-            image_url=image_url  # Adjust if the Luma API uses a different name
+            image_ref=[
+                {
+                    "url": image_url,
+                    "weight": 0.85
+                }
+            ]
         )
     else:
         generation = luma_client.generations.image.create(
