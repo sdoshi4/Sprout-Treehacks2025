@@ -399,6 +399,8 @@ def generate_quiz_from_vocab():
         outputs: list of quiz questions '''
     
     quiz_questions = []
+    chosen_vocab = ["abbreviation", "adverb"] #TODO change
+    chosen_grade_level_key = "grade_3" #TODO change
 
     for word in chosen_vocab:
         # 1. Get the correct definition
