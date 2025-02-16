@@ -394,10 +394,6 @@ Note: Ensure the story comes to a satisfying conclusion while maintaining consis
 
 
 
-
-###### ----------------- --------------------------- ENDPOINTS ----------------- --------------------------- ######
-
-@app.get("/get_quiz_questions")
 def generate_quiz_from_vocab():
     ''' inputs: list of vocab words
         outputs: list of quiz questions '''
@@ -433,7 +429,17 @@ def generate_quiz_from_vocab():
             "options": options
         })
 
-    return quiz_questions    
+    return quiz_questions  
+
+
+###### ----------------- --------------------------- ENDPOINTS ----------------- --------------------------- ######
+  
+
+@app.post("/generate_quiz", response_model=List[Dict[str, Any]])
+def generate_quiz():
+    quiz_questions = generate_quiz_from_vocab()
+    return quiz_questions
+
 
 @app.post("/generate_next_panel", response_model=StoryResponse)
 def generate_next_panel(request: StoryRequest):
