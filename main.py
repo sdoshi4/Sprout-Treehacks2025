@@ -42,7 +42,7 @@ class StoryOutput(BaseModel):
     image_prompt: str
     options: list[str]
 
-class StoryRequest(BaseModel): # This is the first panel
+class StoryRequest(BaseModel): # This is asking for the 
     image_path: Optional[str] = None
     story: Optional[str] = None
     choice: Optional[str] = None
@@ -116,7 +116,7 @@ def generate_image(prompt, image_url: Optional[str] = None):
 def generate_story_from_image(image: Image.Image):
     response = gemini_client.models.generate_content(
         model="gemini-2.0-flash",
-        contents=[image, '''This is an image of a child's drawing. Generate the first chapter of a children's book (around 300 words) from this image, ending the chapter with one of two plot choices. 
+        contents=[image, '''This is an image of a child's drawing. Generate the first chapter of a children's book (around 500 words) from this image, ending the chapter with one of two plot choices (do not restate the two options after the chapter). 
                             Also describe the image passed in, and return a title with chapter number. Return 'story', 'title', 'image_prompt', 'options'.'''],
         config={'response_mime_type': 'application/json', 
                 'response_schema': StoryOutput,
@@ -228,7 +228,6 @@ async def upload_image(image_bytes: bytes = Body(..., media_type="application/oc
         image_path=image_path
     )
     
-
 # THIS WORKS LOCALLY
 # @app.post("/upload_image_flutterflow/")
 # async def upload_image(request: Dict[str, Any] = Body(...)):
