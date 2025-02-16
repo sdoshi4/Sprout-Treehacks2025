@@ -38,6 +38,7 @@ class RequestModel(BaseModel):
 
 class StoryOutput(BaseModel):
     story: str
+    title: str
     image_prompt: str
     options: list[str]
 
@@ -77,7 +78,7 @@ def generate_story_from_image(image: Image.Image):
     response = gemini_client.models.generate_content(
         model="gemini-2.0-flash",
         contents=[image, '''This is an image of a child's drawing. Generate the first chapter of a children's book (around 300 words) from this image, ending the chapter with one of two plot choices. 
-                            Also describe the image passed in. Return 'story', 'image_prompt', 'options'.'''],
+                            Also describe the image passed in, and return a title with chapter number. Return 'story', 'title', 'image_prompt', 'options'.'''],
         config={'response_mime_type': 'application/json', 
                 'response_schema': StoryOutput,
                 'safety_settings': [
@@ -251,6 +252,7 @@ async def upload_image(data: UploadFile = File(None), json_data: str = Form(None
 
         return {
             "story": story_output.story,
+            "title": story_output.title,
             "image_prompt": story_output.image_prompt,
             "options": story_output.options,
             "image_path": image_path
