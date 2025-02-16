@@ -55,8 +55,21 @@ class StoryResponse(BaseModel): # This is the output of gemini
     image_path: str
 
 
-def generate_image(prompt):
-    generation = luma_client.generations.image.create(prompt=prompt)
+def generate_image(prompt, image_url: Optional[str] = None):
+    """
+    Generate an image using Luma with an optional reference image URL as context.
+    """
+    if image_url:
+        # Pass the image URL as conditioning input if supported by Luma API
+        generation = luma_client.generations.image.create(
+            prompt=prompt,
+            image_url=image_url  # Adjust if the Luma API uses a different name
+        )
+    else:
+        generation = luma_client.generations.image.create(
+            prompt=prompt
+        )
+
     while generation.state != "completed":
         generation = luma_client.generations.get(id=generation.id)
         if generation.state == "failed":
@@ -112,7 +125,10 @@ def generate_next_story(story, choice):
 @app.post("/generate_first_panel", response_model=StoryResponse)
 def generate_first_panel(request: StoryRequest):
     story_output = generate_story_from_image(request.image_path)
-    image_path = generate_image(story_output.image_prompt)
+
+    # image_path = generate_image(story_output.image_prompt)
+    image_path = generate_image(story_output.image_prompt, image_url=request.image_path)
+
 
     return StoryResponse(
         story=story_output.story,
