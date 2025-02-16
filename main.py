@@ -86,6 +86,12 @@ def generate_image(prompt, image_url: Optional[str] = None):
                     "url": image_url,
                     "weight": 0.85
                 }
+            ], 
+            style_ref=[
+                {
+                    "url": image_url,
+                    "weight": 0.85
+                }
             ]
         )
     else:
@@ -116,8 +122,8 @@ def generate_image(prompt, image_url: Optional[str] = None):
 def generate_story_from_image(image: Image.Image):
     response = gemini_client.models.generate_content(
         model="gemini-2.0-flash",
-        contents=[image, '''This is an image of a child's drawing. Generate the first chapter of a children's book (around 500 words) from this image, ending the chapter with one of two plot choices (do not restate the two options after the chapter). 
-                            Also describe the image passed in, and return a title with chapter number. Return 'story', 'title', 'image_prompt', 'options'.'''],
+        contents=[image, '''This is an image of a child's drawing. Generate the first chapter of a children's book (around 200 words) from this image, ending the chapter with one of two plot choices (do not restate the two options after the chapter). 
+                            Also describe the image passed in, and return a title with chapter number. Return 'story', 'title', 'image_prompt', 'options'. Make sure that options are returns as a list of strings'''],
         config={'response_mime_type': 'application/json', 
                 'response_schema': StoryOutput,
                 'safety_settings': [
