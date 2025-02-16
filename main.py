@@ -54,7 +54,7 @@ class StoryResponse(BaseModel): # This is the output of gemini
     options: list[str]
     image_path: str
 
-def upload_to_imgur(image_path: str, client_id: str) -> str:
+def upload_to_imgur(image_path: str) -> str:
     """
     Uploads an image to Imgur and returns the image URL.
     """
@@ -108,7 +108,7 @@ def generate_image(prompt, image_url: Optional[str] = None):
         file.write(response.content)
 
     # Upload the generated image to Imgur
-    imgur_url = upload_to_imgur(filename, keys['imgur_client_id'])
+    imgur_url = upload_to_imgur(filename)
 
     return imgur_url  # Return Imgur URL instead of local path
 
