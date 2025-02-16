@@ -49,6 +49,7 @@ class StoryRequest(BaseModel): # This is asking for the
 
 class StoryResponse(BaseModel): # This is the output of gemini
     story: str
+    title: str
     image_prompt: str
     options: list[str]
     image_path: str
@@ -163,6 +164,7 @@ def generate_first_panel(request: StoryRequest):
 
     return StoryResponse(
         story=story_output.story,
+        title=story_output.title,
         image_prompt=story_output.image_prompt,
         options=story_output.options,
         image_path= image_path # this is a url now
@@ -176,6 +178,7 @@ def generate_next_panel(request: StoryRequest):
 
     return StoryResponse(
         story=story_output.story,
+        title=story_output.title,
         image_prompt=story_output.image_prompt,
         options=story_output.options,
         image_path=image_path # this is a url now
@@ -191,6 +194,7 @@ def generate_next_panel():
 
     return StoryResponse(
         story=story_output.story,
+        title=story_output.title,
         image_prompt=story_output.image_prompt,
         options=story_output.options,
         image_path=image_path
@@ -214,6 +218,7 @@ def read_root():
 
 #     return StoryResponse(
 #         story=story_output.story,
+#         title=story_output.title,
 #         image_prompt=story_output.image_prompt,
 #         options=story_output.options,
 #         image_path=image_path
@@ -228,6 +233,7 @@ async def upload_image(image_bytes: bytes = Body(..., media_type="application/oc
     
     return StoryResponse(
         story=story_output.story,
+        title=story_output.title,
         image_prompt=story_output.image_prompt,
         options=story_output.options,
         image_path=image_path
