@@ -20,7 +20,7 @@ with open('image.json', 'r') as file:
 response = requests.post(
     # "https://385a-68-65-164-29.ngrok-free.app/upload_image/",
     
-    "https://a771-68-65-164-139.ngrok-free.app/upload_image_flutterflow",
+    "https://9b1f-68-65-164-139.ngrok-free.app/upload_image_flutterflow",
     json=image_bytes,
     headers={"Content-Type": "multipart/form-data"}
 )
