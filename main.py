@@ -54,9 +54,45 @@ class StoryResponse(BaseModel): # This is the output of gemini
     options: list[str]
     image_path: str
 
+def upload_to_imgur(image_path: str, client_id: str) -> str:
+    """
+    Uploads an image to Imgur and returns the image URL.
+    """
+    client_id = "40c6711dcccaf03" # TODO : fix bc this is hardcoded
+    url = "https://api.imgur.com/3/upload"
+    headers = {"Authorization": f"Client-ID {client_id}"}
+    with open(image_path, 'rb') as image_file:
+        response = requests.post(
+            url,
+            headers=headers,
+            files={"image": image_file}
+        )
+    if response.status_code != 200:
+        raise RuntimeError(f"Imgur upload failed: {response.json()}")
+    return response.json()['data']['link']
 
-def generate_image(prompt):
-    generation = luma_client.generations.image.create(prompt=prompt)
+
+
+def generate_image(prompt, image_url: Optional[str] = None):
+    """
+    Generate an image using Luma with an optional reference image URL as context.
+    """
+    if image_url:
+        # Pass the image URL as conditioning input if supported by Luma API
+        generation = luma_client.generations.image.create(
+            prompt=prompt,
+            image_ref=[
+                {
+                    "url": image_url,
+                    "weight": 0.85
+                }
+            ]
+        )
+    else:
+        generation = luma_client.generations.image.create(
+            prompt=prompt
+        )
+
     while generation.state != "completed":
         generation = luma_client.generations.get(id=generation.id)
         if generation.state == "failed":
@@ -71,7 +107,10 @@ def generate_image(prompt):
     with open(filename, 'wb') as file:
         file.write(response.content)
 
-    return filename
+    # Upload the generated image to Imgur
+    imgur_url = upload_to_imgur(filename, keys['imgur_client_id'])
+
+    return imgur_url  # Return Imgur URL instead of local path
 
 
 def generate_story_from_image(image: Image.Image):
@@ -112,13 +151,16 @@ def generate_next_story(story, choice):
 @app.post("/generate_first_panel", response_model=StoryResponse)
 def generate_first_panel(request: StoryRequest):
     story_output = generate_story_from_image(request.image_path)
-    image_path = generate_image(story_output.image_prompt)
+
+    # image_path = generate_image(story_output.image_prompt)
+    image_path = generate_image(story_output.image_prompt, image_url=request.image_path)
+
 
     return StoryResponse(
         story=story_output.story,
         image_prompt=story_output.image_prompt,
         options=story_output.options,
-        image_path=image_path
+        image_path= image_path # this is a url now
     )
 
 
@@ -131,7 +173,7 @@ def generate_next_panel(request: StoryRequest):
         story=story_output.story,
         image_prompt=story_output.image_prompt,
         options=story_output.options,
-        image_path=image_path
+        image_path=image_path # this is a url now
     )
     
     
