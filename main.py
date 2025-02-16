@@ -383,13 +383,28 @@ Note: Ensure the story comes to a satisfying conclusion while maintaining consis
 
 
 
-def generate_quiz_from_vocab(vocab_words):
+
+# testing dictionary code
+# if __name__ == "__main__":
+#     # test generate_quiz_from_vcab:
+#     vocab_words = ["abbreviation", "adverb"]
+#     chosen_grade_level_key = "grade_3"
+#     quiz_questions = generate_quiz_from_vocab(vocab_words)
+#     print(quiz_questions)
+
+
+
+
+###### ----------------- --------------------------- ENDPOINTS ----------------- --------------------------- ######
+
+@app.get("/get_quiz_questions")
+def generate_quiz_from_vocab():
     ''' inputs: list of vocab words
         outputs: list of quiz questions '''
     
     quiz_questions = []
 
-    for word in vocab_words:
+    for word in chosen_vocab:
         # 1. Get the correct definition
         
         correct_definition = get_definition(word)
@@ -400,7 +415,7 @@ def generate_quiz_from_vocab(vocab_words):
         other_words = [w for w in grade_words if w != word]
 
         wrong_answers = []
-        while len(wrong_answers) < 3:
+        while len(wrong_answers) < 2:
             random_word = random.choice(other_words)
             wrong_def = get_definition(random_word)
 
@@ -418,22 +433,7 @@ def generate_quiz_from_vocab(vocab_words):
             "options": options
         })
 
-    return quiz_questions
-
-# testing dictionary code
-# if __name__ == "__main__":
-#     # test generate_quiz_from_vcab:
-#     vocab_words = ["abbreviation", "adverb"]
-#     chosen_grade_level_key = "grade_3"
-#     quiz_questions = generate_quiz_from_vocab(vocab_words)
-#     print(quiz_questions)
-
-
-
-
-###### ----------------- --------------------------- ENDPOINTS ----------------- --------------------------- ######
-
-    
+    return quiz_questions    
 
 @app.post("/generate_next_panel", response_model=StoryResponse)
 def generate_next_panel(request: StoryRequest):
