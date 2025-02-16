@@ -79,7 +79,7 @@ def generate_image(prompt, image_url: Optional[str] = None):
     if image_url:
         # Pass the image URL as conditioning input if supported by Luma API
         generation = luma_client.generations.image.create(
-            prompt=prompt,
+            prompt=prompt + " Make sure the style is similar to a children's book or more cartoonish, similar to their drawing.",
             image_ref=[
                 {
                     "url": image_url,
