@@ -313,6 +313,57 @@ Note: Maintain consistency with the characters, settings, and plot developments 
     )
     return response.parsed
 
+# USED FOR ALL AFTER THE FIRST
+def generate_final_story(title, story, choice):
+    response = gemini_client.models.generate_content(
+        model="gemini-2.0-flash",
+        contents=[f"Chapter title: {title}", f"Chapter: {story}", f"Choice: {choice}", '''
+                  Previous chapter information:
+Title: {title}
+Content: {story}
+User's choice: {choice}
+
+Based on the previous chapter and the user's choice, generate the final chapter of the children's storybook:
+
+1. Image description (image_prompt):
+   - Provide a detailed description for a concluding image that reflects the story's resolution.
+   - Ensure consistency with previously established characters and settings.
+
+2. Title:
+   - Use the format "Title: Chapter {number}: The End!"
+
+3. Story:
+   - Write a 300-word concluding chapter that wraps up the story.
+   - Resolve the main conflicts or challenges introduced in previous chapters.
+   - Provide a satisfying ending that ties together the story elements.
+   - Include a clear moral or lesson learned by the main character(s).
+   - End with a sense of closure, but hint at potential future adventures if appropriate.
+
+4. Options:
+   - Both options should be identical and say "Go to Quiz".
+
+Return the results in the following JSON format:
+{
+  "image_prompt": "[Detailed image description for the final chapter]",
+  "title": "Title: Chapter {number}: The End!",
+  "story": "[300-word concluding chapter content]",
+  "options": ["Go to Quiz", "Go to Quiz"]
+}
+
+Note: Ensure the story comes to a satisfying conclusion while maintaining consistency with previous chapters' characters, settings, and plot developments. The ending should feel complete and rewarding for the reader.
+                  '''],
+        config={'response_mime_type': 'application/json', 
+                'response_schema': StoryOutput,
+                'safety_settings': [
+                    {"category": "HARM_CATEGORY_HARASSMENT", "threshold": "BLOCK_MEDIUM_AND_ABOVE"},
+                    {"category": "HARM_CATEGORY_HATE_SPEECH", "threshold": "BLOCK_MEDIUM_AND_ABOVE"},
+                    {"category": "HARM_CATEGORY_DANGEROUS_CONTENT", "threshold": "BLOCK_MEDIUM_AND_ABOVE"},
+                    {"category": "HARM_CATEGORY_SEXUALLY_EXPLICIT", "threshold": "BLOCK_ONLY_HIGH"},
+                ]
+            },
+    )
+    return response.parsed
+
 
 # @app.post("/generate_first_panel", response_model=StoryResponse)
 # def generate_first_panel(request: StoryRequest):
@@ -398,6 +449,20 @@ def generate_next_panel(request: StoryRequest):
     )
     
     
+
+
+@app.post("/generate_final_panel", response_model=StoryResponse)
+def generate_final_panel(request: StoryRequest):
+    story_output = generate_final_story(request.title, request.story, request.choice)
+    image_path = generate_image(story_output.image_prompt)
+
+    return StoryResponse(
+        story=story_output.story,
+        title=story_output.title,
+        image_prompt=story_output.image_prompt,
+        options=story_output.options,
+        image_path=image_path # this is a url now
+    )
 # THIS IS JUST FOR TESTING
 # @app.get("/generate_story")
 # def generate_next_panel():
