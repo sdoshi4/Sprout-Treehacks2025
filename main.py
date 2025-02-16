@@ -8,14 +8,17 @@ from PIL import Image
 from google.genai import types
 from pydantic import BaseModel
 from concurrent.futures import ThreadPoolExecutor
-from typing import List, Optional
+from typing import List, Optional, Dict, Any
 
 from fastapi import FastAPI, HTTPException
 from fastapi.responses import FileResponse
 from typing import Optional
-from fastapi import FastAPI, Body, Request
+from fastapi import FastAPI, Body, Request, Form
 import requests
 from io import BytesIO
+import json
+from fastapi import FastAPI, UploadFile, File
+from fastapi.responses import JSONResponse
 
 app = FastAPI()
 
@@ -199,31 +202,203 @@ async def upload_image(image_bytes: bytes = Body(..., media_type="application/oc
 #         image_path=image_path
 #     )
 
-@app.post("/upload_image_flutterflow/")
-async def upload_image_flutterflow(request: Request):
-    json_data = await request.json()
-    print("Received JSON data:", json_data)
+# @app.post("/upload_image_flutterflow/")
+# async def upload_image_flutterflow(request: Request):
+#     json_data = await request.json()
+#     print("Received JSON data:", json_data)
 
+#     try:
+#         image_bytes = bytes(json_data["data"]["bytes"])
+#         image = Image.open(BytesIO(image_bytes))
+#         story_output = generate_story_from_image(image)
+#         image_path = generate_image(story_output.image_prompt)
+        
+#         return StoryResponse(
+#             story=story_output.story,
+#             image_prompt=story_output.image_prompt,
+#             options=story_output.options,
+#             image_path=image_path
+#         )
+#         # image.verify()  # Validate the image without loading fully
+
+#         # Save image
+#         # os.makedirs("images", exist_ok=True)
+#         # image_path = f"images/{json_data['data']['name']}"
+#         # image = Image.open(BytesIO(image_bytes))  # Re-open to actually load it
+#         # image.save(image_path)
+
+#         # return {"message": f"Image saved to {image_path}"}
+#     except Exception as e:
+#         raise HTTPException(status_code=400, detail=f"Image processing failed: {e}")
+class ImageData(BaseModel):
+    name: str
+    bytes: List[int]
+    height: int | None = None
+    width: int | None = None
+    blurHash: str | None = None
+
+# THIS WORKS LOCALLY
+# @app.post("/upload_image_flutterflow/")
+# async def upload_image(request: Dict[str, Any] = Body(...)):
+#     try:
+#         print("Received Request:", request)
+
+#         # Step 1: Extract the JSON string from "json" key
+#         if "json" not in request:
+#             raise HTTPException(status_code=400, detail="Missing 'json' key in request body")
+
+#         json_str = request["json"]
+
+#         # Step 2: Parse JSON string into a dictionary
+#         try:
+#             image_data_dict = json.loads(json_str)
+#         except json.JSONDecodeError:
+#             raise HTTPException(status_code=400, detail="Invalid JSON format inside 'json' key")
+
+#         # Step 3: Validate that the parsed object contains expected fields
+#         if not isinstance(image_data_dict, dict) or "bytes" not in image_data_dict:
+#             raise HTTPException(status_code=400, detail="Missing 'bytes' key inside parsed JSON")
+
+#         # Step 4: Convert list of integers into bytes
+#         image_bytes = bytes(image_data_dict["bytes"])
+#         image = Image.open(BytesIO(image_bytes))
+
+#         # Process the image (replace with actual processing functions)
+#         story_output = generate_story_from_image(image)
+#         image_path = generate_image(story_output.image_prompt)
+
+#         return {
+#             "story": story_output.story,
+#             "image_prompt": story_output.image_prompt,
+#             "options": story_output.options,
+#             "image_path": image_path
+#         }
+
+#     except Exception as e:
+#         raise HTTPException(status_code=500, detail=f"Internal Server Error: {str(e)}")
+
+
+# @app.post("/upload_image_flutterflow/")
+# async def upload_image(file: UploadFile = File(...)): 
+#     contents = await file.read()
+
+#     # You can save it if you want:
+#     with open(f"images/{file.filename}", "wb") as f:
+#         f.write(contents)
+
+#     return JSONResponse(content={"filename": file.filename, "content_type": file.content_type})
+
+# @app.post("/upload_image_flutterflow/")
+# async def upload_image(request: Request):
+#     try:
+#         print("Received Request Headers:", request.headers)
+
+#         # Attempt to extract JSON from the request
+#         content_type = request.headers.get("content-type", "")
+
+#         if "application/json" in content_type:
+#             # Parse JSON body
+#             body = await request.json()
+
+#             # Ensure expected structure
+#             if "json" not in body:
+#                 raise HTTPException(status_code=400, detail="Missing 'json' key in request body")
+
+#             json_str = body["json"]
+#             try:
+#                 image_data_dict = json.loads(json_str)  # ✅ Properly parse the JSON string
+#             except json.JSONDecodeError:
+#                 raise HTTPException(status_code=400, detail="Invalid JSON format inside 'json' key")
+
+#             # Validate that the parsed object contains expected fields
+#             if not isinstance(image_data_dict, dict) or "bytes" not in image_data_dict:
+#                 raise HTTPException(status_code=400, detail="Missing 'bytes' key inside parsed JSON")
+
+#             # Convert list of integers into bytes
+#             image_bytes = bytes(image_data_dict["bytes"])
+
+#         elif "multipart/form-data" in content_type:
+#             # Handle raw binary upload
+#             form_data = await request.form()
+#             file_content = await form_data["file"].read()  # Read binary file data
+            
+#             if not file_content:
+#                 raise HTTPException(status_code=400, detail="Received empty file content")
+
+#             image_bytes = file_content  # Use raw binary data
+
+#         else:
+#             raise HTTPException(status_code=400, detail="Unsupported Content-Type. Use 'application/json' or 'multipart/form-data'.")
+
+#         # Step 2: Open the image using PIL
+#         image = Image.open(BytesIO(image_bytes))
+
+#         # Process the image (replace with actual processing functions)
+#         return {"output": image}
+#         # story_output = generate_story_from_image(image)
+#         # image_path = generate_image(story_output.image_prompt)
+
+#         # return {
+#         #     "story": story_output.story,
+#         #     "image_prompt": story_output.image_prompt,
+#         #     "options": story_output.options,
+#         #     "image_path": image_path
+#         # }
+
+#     except Exception as e:
+#         raise HTTPException(status_code=500, detail=f"Internal Server Error: {str(e)}")
+
+# @app.post("/upload_image_flutterflow/")
+# async def upload_image(data: UploadFile = File(...)):  # Accepts file under "data" key
+#     try:
+#         print("Received File:", data.filename)
+
+#         # Read the uploaded image file
+#         image_bytes = await data.read()
+#         image = Image.open(BytesIO(image_bytes))
+
+#         # Process the image (replace with actual processing functions)
+#         story_output = generate_story_from_image(image)
+#         image_path = generate_image(story_output.image_prompt)
+
+#         return {
+#             "story": story_output.story,
+#             "image_prompt": story_output.image_prompt,
+#             "options": story_output.options,
+#             "image_path": image_path
+#         }
+
+#     except Exception as e:
+#         raise HTTPException(status_code=500, detail=f"Internal Server Error: {str(e)}")
+
+@app.post("/upload_image_flutterflow/")
+async def upload_image(data: UploadFile = File(None), json_data: str = Form(None)):  
     try:
-        image_bytes = bytes(json_data["data"]["bytes"])
+        if data:
+            print("Received File:", data.filename)
+            image_bytes = await data.read()
+        elif json_data:
+            print("Received JSON Data")
+            json_dict = json.loads(json_data)
+            if "bytes" not in json_dict:
+                raise HTTPException(status_code=400, detail="Missing 'bytes' key in JSON")
+            image_bytes = bytes(json_dict["bytes"])
+        else:
+            raise HTTPException(status_code=400, detail="No valid image data received")
+
+        # Convert bytes to image
         image = Image.open(BytesIO(image_bytes))
+
+        # Process image (replace with actual logic)
         story_output = generate_story_from_image(image)
         image_path = generate_image(story_output.image_prompt)
-        
-        return StoryResponse(
-            story=story_output.story,
-            image_prompt=story_output.image_prompt,
-            options=story_output.options,
-            image_path=image_path
-        )
-        # image.verify()  # Validate the image without loading fully
 
-        # Save image
-        # os.makedirs("images", exist_ok=True)
-        # image_path = f"images/{json_data['data']['name']}"
-        # image = Image.open(BytesIO(image_bytes))  # Re-open to actually load it
-        # image.save(image_path)
+        return {
+            "story": story_output.story,
+            "image_prompt": story_output.image_prompt,
+            "options": story_output.options,
+            "image_path": image_path
+        }
 
-        # return {"message": f"Image saved to {image_path}"}
     except Exception as e:
-        raise HTTPException(status_code=400, detail=f"Image processing failed: {e}")
+        raise HTTPException(status_code=500, detail=f"Internal Server Error: {str(e)}")

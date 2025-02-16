@@ -22,7 +22,7 @@ response = requests.post(
     
     "https://a771-68-65-164-139.ngrok-free.app/upload_image_flutterflow",
     json=image_bytes,
-    headers={"Content-Type": "application/json"}
+    headers={"Content-Type": "multipart/form-data"}
 )
 
 # response = requests.get("https://385a-68-65-164-29.ngrok-free.app/generate_story")
