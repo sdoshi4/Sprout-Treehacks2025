@@ -200,9 +200,11 @@ def generate_image(prompt, image_url: Optional[str] = None):
 # USED FOR THE FIRST ITERATION
 def generate_story_from_image(image: Image.Image, grade_level_key="grade_4"):
     chosen_grade_level_key = grade_level_key
-    i, j = 0
-    while (i==j):
-        i, j = math.random(0, len(comprehension_vocab[grade_level_key]))
+    # i, j = 0
+    # while (i==j):
+    #     i, j = random.sample(range(len(comprehension_vocab[grade_level_key])), 2)
+    i = 1
+    j = 2
     chosen_vocab.append(comprehension_vocab[grade_level_key][i])
     chosen_vocab.append(comprehension_vocab[grade_level_key][j])
     
@@ -255,7 +257,8 @@ Note: Ensure the title strictly follows the format "Chapter 1: {title name here}
 
 # USED FOR ALL AFTER THE FIRST
 def generate_next_story(title, story, choice):
-    
+    # used_word2 = False
+    global used_word2
     if (not used_word2):
         vocab_prompt_engineering = f"Finally, in the story, ensure that you incorporate the chosen vocabulary word: {chosen_vocab[1]}; this is very important"
         used_word2 = True
@@ -397,41 +400,41 @@ Note: Ensure the story comes to a satisfying conclusion while maintaining consis
 def generate_quiz_from_vocab():
     ''' inputs: list of vocab words
         outputs: list of quiz questions '''
-    # return [{'word': 'abbreviation', 'correct_answer': 'a shortened form of a word or phrase', 'options': ['any very large body of (salt) water', 'a shortened form of a word or phrase', 'carefully observant or attentive; on the lookout for possible danger', 'the act of persuading (or attempting to persuade); communication intended to induce belief or action']}, {'word': 'adverb', 'correct_answer': 'the word class that qualifies verbs or clauses', 'options': ["an account of the series of events making up a person's life", 'the word class that qualifies verbs or clauses', 'uneasiness about the fitness of an action', 'the reasoning involved in drawing a conclusion or making a logical judgment on the basis of circumstantial evidence and prior conclusions rather than on the basis of direct observation']}]
-    quiz_questions = []
-    chosen_vocab = ["abbreviation", "adverb"] #TODO change
-    chosen_grade_level_key = "grade_3" #TODO change
+    return [{'word': 'abbreviation', 'correct_answer': 'a shortened form of a word or phrase', 'options': ['any very large body of (salt) water', 'a shortened form of a word or phrase', 'carefully observant or attentive; on the lookout for possible danger', 'the act of persuading (or attempting to persuade); communication intended to induce belief or action']}, {'word': 'adverb', 'correct_answer': 'the word class that qualifies verbs or clauses', 'options': ["an account of the series of events making up a person's life", 'the word class that qualifies verbs or clauses', 'uneasiness about the fitness of an action', 'the reasoning involved in drawing a conclusion or making a logical judgment on the basis of circumstantial evidence and prior conclusions rather than on the basis of direct observation']}]
+    # quiz_questions = []
+    # chosen_vocab = ["abbreviation", "adverb"] #TODO change
+    # chosen_grade_level_key = "grade_3" #TODO change
 
-    for word in chosen_vocab:
-        # 1. Get the correct definition
+    # for word in chosen_vocab:
+    #     # 1. Get the correct definition
         
-        correct_definition = get_definition(word)
+    #     correct_definition = get_definition(word)
         
 
-        # 2. Get 3 wrong answers from the same grade level (excluding the word itself)
-        grade_words = comprehension_vocab[chosen_grade_level_key]
-        other_words = [w for w in grade_words if w != word]
+    #     # 2. Get 3 wrong answers from the same grade level (excluding the word itself)
+    #     grade_words = comprehension_vocab[chosen_grade_level_key]
+    #     other_words = [w for w in grade_words if w != word]
 
-        wrong_answers = []
-        while len(wrong_answers) < 2:
-            random_word = random.choice(other_words)
-            wrong_def = get_definition(random_word)
+    #     wrong_answers = []
+    #     while len(wrong_answers) < 2:
+    #         random_word = random.choice(other_words)
+    #         wrong_def = get_definition(random_word)
 
-            if wrong_def and wrong_def != correct_definition and wrong_def not in wrong_answers:
-                wrong_answers.append(wrong_def)
+    #         if wrong_def and wrong_def != correct_definition and wrong_def not in wrong_answers:
+    #             wrong_answers.append(wrong_def)
 
-        # 3. Prepare options
-        options = [correct_definition] + wrong_answers
-        random.shuffle(options)
+    #     # 3. Prepare options
+    #     options = [correct_definition] + wrong_answers
+    #     random.shuffle(options)
 
-        # 4. Store the quiz question
-        quiz_questions.append({
-            "word": word,
-            "correct_answer": correct_definition,
-            "options": options
-        })
+    #     # 4. Store the quiz question
+    #     quiz_questions.append({
+    #         "word": word,
+    #         "correct_answer": correct_definition,
+    #         "options": options
+    #     })
 
-    return quiz_questions  
+    # return quiz_questions  
 
 
 ###### ----------------- --------------------------- ENDPOINTS ----------------- --------------------------- ######
@@ -572,6 +575,7 @@ async def upload_image(data: UploadFile = File(None), json_data: str = Form(None
         if data:
             print("Received File:", data.filename)
             image_bytes = await data.read()
+            # print("HELLO WORLD")
         elif json_data:
             print("Received JSON Data")
             json_dict = json.loads(json_data)
