@@ -12,7 +12,7 @@ from concurrent.futures import ThreadPoolExecutor
 from fastapi import FastAPI
 from fastapi.responses import FileResponse
 from typing import Optional
-from fastapi import FastAPI, Body
+from fastapi import FastAPI, Body, Request
 import requests
 from io import BytesIO
 
@@ -176,8 +176,11 @@ async def upload_image(image_bytes: bytes = Body(..., media_type="application/oc
     )
     
 @app.post("/upload_image_flutterflow/")
-async def upload_image(image_bytes: bytes = Body(..., media_type="application/octet-stream")):
-    image = Image.open(BytesIO(bytes(image_bytes.bytes)))
+async def upload_image(request: Request):
+    json_data = await request.json()
+    print(json_data)
+    image_bytes = bytes(json_data["data"]["bytes"])
+    image = Image.open(BytesIO(image_bytes))
     story_output = generate_story_from_image(image)
     image_path = generate_image(story_output.image_prompt)
     
