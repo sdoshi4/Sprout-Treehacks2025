@@ -46,7 +46,6 @@ class StoryRequest(BaseModel): # This is asking for the
     image_path: Optional[str] = None
     story: Optional[str] = None
     choice: Optional[str] = None
-    panel: int
 
 class StoryResponse(BaseModel): # This is the output of gemini
     story: str
