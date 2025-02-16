@@ -45,6 +45,7 @@ class StoryOutput(BaseModel):
 class StoryRequest(BaseModel): # This is asking for the 
     image_path: Optional[str] = None
     story: Optional[str] = None
+    title: Optional[str] = None
     choice: Optional[str] = None
 
 class StoryResponse(BaseModel): # This is the output of gemini
@@ -118,12 +119,39 @@ def generate_image(prompt, image_url: Optional[str] = None):
 
     return imgur_url  # Return Imgur URL instead of local path
 
-
+# USED FOR THE FIRST ITERATION
 def generate_story_from_image(image: Image.Image):
     response = gemini_client.models.generate_content(
         model="gemini-2.0-flash",
-        contents=[image, '''This is an image of a child's drawing. Generate the first chapter of a children's book (around 200 words) from this image, ending the chapter with one of two plot choices (do not restate the two options after the chapter). 
-                            Also describe the image passed in, and return a title with chapter number. Finally, make sure hte prompt also has important information about the character descriptions and settings involved. Return 'story', 'title', 'image_prompt', 'options'. Make sure that options are returns as a list of strings'''],
+        contents=[image, '''Analyze the provided image of a child's drawing and create the following for the first chapter of a children's storybook:
+
+1. Image description (image_prompt): 
+   - Provide a detailed description of the key elements in the drawing.
+   - Include specific details about characters, settings, and objects that should be consistent in future chapters.
+
+2. Title: 
+   - Create a title in the format "Chapter 1: {title name here}"
+
+3. Story:
+   - Write a 300-word chapter based on the image.
+   - Introduce and describe the main characters and setting in detail.
+   - Develop a clear plot point or conflict.
+   - End the chapter with a situation that leads to two distinct choices.
+
+4. Options:
+   - Provide two specific, mutually exclusive choices for how the story could continue.
+   - Keep each option brief, ideally 10 words or less.
+
+Return the results in the following JSON format:
+{
+  "image_prompt": "[Detailed image description for consistency]",
+  "title": "Chapter 1: [Your Title Here]",
+  "story": "[300-word chapter content]",
+  "options": ["[Brief Option 1]", "[Brief Option 2]"]
+}
+
+Note: Ensure the title strictly follows the format "Chapter 1: {title name here}".
+'''],
         config={'response_mime_type': 'application/json', 
                 'response_schema': StoryOutput,
                 'safety_settings': [
@@ -136,11 +164,46 @@ def generate_story_from_image(image: Image.Image):
     )
     return response.parsed
 
-
-def generate_next_story(story, choice):
+# USED FOR ALL AFTER THE FIRST
+def generate_next_story(title, story, choice):
     response = gemini_client.models.generate_content(
         model="gemini-2.0-flash",
-        contents=[f"Chapter: {story}", f"Choice: {choice}", "Generate the next chapter."],
+        contents=[f"Chapter title: {title}", f"Chapter: {story}", f"Choice: {choice}", '''
+                  Previous chapter information:
+Previous chapter information:
+Title: {title}
+Content: {story}
+User's choice: {choice}
+
+Based on the previous chapter and the user's choice, generate the next chapter of the children's storybook:
+
+1. Image description (image_prompt):
+   - Provide a detailed description for a new image that reflects the user's choice and continues the story.
+   - Ensure consistency with previously established characters and settings.
+
+2. Title:
+   - Create a title in the format "Chapter X: {title name here}", where X is the next chapter number.
+
+3. Story:
+   - Write a 300-word chapter that directly follows from the user's choice.
+   - Continue developing the main characters and setting.
+   - Introduce new elements or conflicts as appropriate.
+   - End the chapter with a new situation that leads to two distinct choices.
+
+4. Options:
+   - Provide two specific, mutually exclusive choices for how the story could continue.
+   - Keep each option brief, ideally 10 words or less.
+
+Return the results in the following JSON format:
+{
+  "image_prompt": "[Detailed image description for the new chapter]",
+  "title": "Chapter X: [Your Title Here]",
+  "story": "[300-word new chapter content]",
+  "options": ["[Brief Option 1]", "[Brief Option 2]"]
+}
+
+Note: Maintain consistency with the characters, settings, and plot developments from the previous chapter. The new chapter should be a direct continuation based on the user's choice. Ensure the title strictly follows the format "Chapter X: {title name here}".
+                  '''],
         config={'response_mime_type': 'application/json', 
                 'response_schema': StoryOutput,
                 'safety_settings': [
@@ -154,26 +217,26 @@ def generate_next_story(story, choice):
     return response.parsed
 
 
-@app.post("/generate_first_panel", response_model=StoryResponse)
-def generate_first_panel(request: StoryRequest):
-    story_output = generate_story_from_image(request.image_path)
+# @app.post("/generate_first_panel", response_model=StoryResponse)
+# def generate_first_panel(request: StoryRequest):
+#     story_output = generate_story_from_image(request.image_path)
 
-    # image_path = generate_image(story_output.image_prompt)
-    image_path = generate_image(story_output.image_prompt, image_url=request.image_path)
+#     # image_path = generate_image(story_output.image_prompt)
+#     image_path = generate_image(story_output.image_prompt, image_url=request.image_path)
 
 
-    return StoryResponse(
-        story=story_output.story,
-        title=story_output.title,
-        image_prompt=story_output.image_prompt,
-        options=story_output.options,
-        image_path= image_path # this is a url now
-    )
+#     return StoryResponse(
+#         story=story_output.story,
+#         title=story_output.title,
+#         image_prompt=story_output.image_prompt,
+#         options=story_output.options,
+#         image_path= image_path # this is a url now
+#     )
 
 
 @app.post("/generate_next_panel", response_model=StoryResponse)
 def generate_next_panel(request: StoryRequest):
-    story_output = generate_next_story(request.story, request.choice)
+    story_output = generate_next_story(request.title, request.story, request.choice)
     image_path = generate_image(story_output.image_prompt)
 
     return StoryResponse(
@@ -186,19 +249,19 @@ def generate_next_panel(request: StoryRequest):
     
     
 # THIS IS JUST FOR TESTING
-@app.get("/generate_story")
-def generate_next_panel():
-    image = Image.open("kids_drawing.jpg")
-    story_output = generate_story_from_image(image)
-    image_path = generate_image(story_output.image_prompt)
+# @app.get("/generate_story")
+# def generate_next_panel():
+#     image = Image.open("kids_drawing.jpg")
+#     story_output = generate_story_from_image(image)
+#     image_path = generate_image(story_output.image_prompt)
 
-    return StoryResponse(
-        story=story_output.story,
-        title=story_output.title,
-        image_prompt=story_output.image_prompt,
-        options=story_output.options,
-        image_path=image_path
-    )
+#     return StoryResponse(
+#         story=story_output.story,
+#         title=story_output.title,
+#         image_prompt=story_output.image_prompt,
+#         options=story_output.options,
+#         image_path=image_path
+#     )
 
 
 @app.get("/images/{image_name}")
@@ -224,20 +287,20 @@ def read_root():
 #         image_path=image_path
 #     )
 
-
-@app.post("/upload_image/")
-async def upload_image(image_bytes: bytes = Body(..., media_type="application/octet-stream")):
-    image = Image.open(BytesIO(image_bytes))
-    story_output = generate_story_from_image(image)
-    image_path = generate_image(story_output.image_prompt)
+#THIS WORKS LOCALLY
+# @app.post("/upload_image/")
+# async def upload_image(image_bytes: bytes = Body(..., media_type="application/octet-stream")):
+#     image = Image.open(BytesIO(image_bytes))
+#     story_output = generate_story_from_image(image)
+#     image_path = generate_image(story_output.image_prompt)
     
-    return StoryResponse(
-        story=story_output.story,
-        title=story_output.title,
-        image_prompt=story_output.image_prompt,
-        options=story_output.options,
-        image_path=image_path
-    )
+#     return StoryResponse(
+#         story=story_output.story,
+#         title=story_output.title,
+#         image_prompt=story_output.image_prompt,
+#         options=story_output.options,
+#         image_path=image_path
+#     )
     
 # THIS WORKS LOCALLY
 # @app.post("/upload_image_flutterflow/")
