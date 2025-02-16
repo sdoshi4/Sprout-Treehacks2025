@@ -435,7 +435,7 @@ def generate_quiz_from_vocab():
 ###### ----------------- --------------------------- ENDPOINTS ----------------- --------------------------- ######
   
 
-@app.post("/generate_quiz", response_model=List[Dict[str, Any]])
+@app.get("/generate_quiz", response_model=List[Dict[str, Any]])
 def generate_quiz():
     quiz_questions = generate_quiz_from_vocab()
     return quiz_questions
