@@ -88,7 +88,7 @@ comprehension_vocab = {
 }
 
 chosen_vocab = []
-chosen_grade_level_key = ""
+chosen_grade_level_key = "grade_4"
 used_word2 = False
 
 
@@ -198,7 +198,7 @@ def generate_image(prompt, image_url: Optional[str] = None):
     return imgur_url  # Return Imgur URL instead of local path
 
 # USED FOR THE FIRST ITERATION
-def generate_story_from_image(image: Image.Image, grade_level_key: str):
+def generate_story_from_image(image: Image.Image, grade_level_key="grade_4"):
     chosen_grade_level_key = grade_level_key
     i, j = 0
     while (i==j):
@@ -397,7 +397,7 @@ Note: Ensure the story comes to a satisfying conclusion while maintaining consis
 def generate_quiz_from_vocab():
     ''' inputs: list of vocab words
         outputs: list of quiz questions '''
-    
+    # return [{'word': 'abbreviation', 'correct_answer': 'a shortened form of a word or phrase', 'options': ['any very large body of (salt) water', 'a shortened form of a word or phrase', 'carefully observant or attentive; on the lookout for possible danger', 'the act of persuading (or attempting to persuade); communication intended to induce belief or action']}, {'word': 'adverb', 'correct_answer': 'the word class that qualifies verbs or clauses', 'options': ["an account of the series of events making up a person's life", 'the word class that qualifies verbs or clauses', 'uneasiness about the fitness of an action', 'the reasoning involved in drawing a conclusion or making a logical judgment on the basis of circumstantial evidence and prior conclusions rather than on the basis of direct observation']}]
     quiz_questions = []
     chosen_vocab = ["abbreviation", "adverb"] #TODO change
     chosen_grade_level_key = "grade_3" #TODO change
@@ -437,8 +437,8 @@ def generate_quiz_from_vocab():
 ###### ----------------- --------------------------- ENDPOINTS ----------------- --------------------------- ######
   
 
-@app.get("/generate_quiz", response_model=List[Dict[str, Any]])
-def generate_quiz():
+@app.post("/generate_quiz", response_model=List[Dict[str, Any]])
+def generate_quiz(request: Any):
     quiz_questions = generate_quiz_from_vocab()
     return quiz_questions
 
